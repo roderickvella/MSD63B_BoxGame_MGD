@@ -4,13 +4,16 @@ using UnityEngine;
 using TMPro;
 using Photon.Pun;
 
-public class PlayerController : MonoBehaviour, IPunInstantiateMagicCallback
+public class PlayerController : MonoBehaviour, IPunInstantiateMagicCallback, IPunObservable
 {
 
     private Vector3 playerScale;
 
     public FixedJoystick fixedJoystick;
     private PhotonView photonView;
+    private Rigidbody2D rigidbody2D;
+    private float horizontal, vertical;
+    private Vector3 playerPos;
 
     public void OnPhotonInstantiate(PhotonMessageInfo info)
     {
@@ -45,6 +48,7 @@ public class PlayerController : MonoBehaviour, IPunInstantiateMagicCallback
         {
             //this player owns this photonview, therefore give him access to the joystick
             fixedJoystick = GameObject.Find("Fixed Joystick").GetComponent<FixedJoystick>();
+            rigidbody2D = GetComponent<Rigidbody2D>();
         }
         else
         {
@@ -59,5 +63,47 @@ public class PlayerController : MonoBehaviour, IPunInstantiateMagicCallback
     {
         //change the scale of the prefab square
         transform.localScale = new Vector3(playerScale.x, playerScale.y, playerScale.z);
+
+        if (photonView.IsMine)
+        {
+            //we on this instance (box) so get the data from the joystick
+            horizontal = fixedJoystick.Horizontal;
+            vertical = fixedJoystick.Vertical;
+        }
+        else
+        {
+            //we don't own this object, therefore we have to move it by data from the server
+            //the data that we receiving from the OnPhotonSerializeView()
+            //transform.position = playerPos;
+
+            //we are going to make use of lerp function to fill (predict) missing data
+            //this wil create a smooth animation between two sets of data
+            transform.position = Vector3.Lerp(transform.position, playerPos, Time.deltaTime * 10);
+        }
+    }
+
+    void FixedUpdate()
+    {
+        if (photonView.IsMine)
+        {
+            float runSpeed = 5.0f;
+            rigidbody2D.velocity = new Vector2(horizontal * runSpeed, vertical * runSpeed);
+        }
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            //stream.iswriting is executed if we own this object. send data to other client
+            stream.SendNext(transform.position);
+            print("Sending Position Data:" + transform.position);
+        }
+        else
+        {
+            //receive data from server
+            playerPos = (Vector3) stream.ReceiveNext();
+            print("Receiving Position Data:" + playerPos);
+        }
     }
 }

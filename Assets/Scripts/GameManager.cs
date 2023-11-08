@@ -9,7 +9,11 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        if(PhotonNetwork.IsMasterClient == false)
+        {
+            //do not show the change sizes button
+            GameObject.Find("ButtonChangeSizes").SetActive(false);
+        }
     }
 
     // Update is called once per frame
