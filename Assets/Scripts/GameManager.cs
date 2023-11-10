@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Photon.Pun;
 using System.Collections;
 using System.Collections.Generic;
@@ -41,5 +42,30 @@ public class GameManager : MonoBehaviour
             Quaternion.identity,
             0,
             myCustomInitData);
+    }
+
+    //this method is only called by the master client (because the button is only rendered
+    //on the master client's device)
+    public void ChangeSizesButton()
+    {
+        List<PlayerInfo> playerInfos = new List<PlayerInfo>();
+        Photon.Realtime.Player[] allPlayers = PhotonNetwork.PlayerList;
+
+        foreach(Photon.Realtime.Player player in allPlayers)
+        {
+            float size = Random.Range(0.5f, 0.8f);
+            playerInfos.Add(new PlayerInfo()
+            {
+                actorNumber = player.ActorNumber,
+                size = new Vector3(size, size, 1)
+            });
+        }
+
+        string json = JsonConvert.SerializeObject(playerInfos);
+        //send json over the network to all players with the new random sizes
+        GetComponent<NetworkManager>().ChangeSizes(json);
+
+
+
     }
 }

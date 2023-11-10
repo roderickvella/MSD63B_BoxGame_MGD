@@ -97,13 +97,24 @@ public class PlayerController : MonoBehaviour, IPunInstantiateMagicCallback, IPu
         {
             //stream.iswriting is executed if we own this object. send data to other client
             stream.SendNext(transform.position);
-            print("Sending Position Data:" + transform.position);
+            //print("Sending Position Data:" + transform.position);
         }
         else
         {
             //receive data from server
             playerPos = (Vector3) stream.ReceiveNext();
-            print("Receiving Position Data:" + playerPos);
+            //print("Receiving Position Data:" + playerPos);
+        }
+    }
+
+    public void ChangeSizeFromMaster(List<PlayerInfo> playersInfo)
+    {
+        foreach(PlayerInfo playerInfo in playersInfo)
+        {
+            if(photonView.Owner.ActorNumber == playerInfo.actorNumber)
+            {
+                this.playerScale = playerInfo.size;
+            }
         }
     }
 }
