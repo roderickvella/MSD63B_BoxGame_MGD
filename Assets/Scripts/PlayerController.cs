@@ -117,4 +117,38 @@ public class PlayerController : MonoBehaviour, IPunInstantiateMagicCallback, IPu
             }
         }
     }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            if (photonView.IsMine)
+            {
+                //get scale of object we are colliding with
+                float scaleOther = collision.transform.localScale.x;
+
+                //get scale of mine (of this player)
+                float scaleMine = transform.localScale.x;
+
+                //get id of the smallest player
+                int destroyPlayerId;
+                if(scaleMine > scaleOther)
+                {
+                    destroyPlayerId = collision.gameObject.GetComponent<PlayerController>()
+                        .photonView.Owner.ActorNumber;
+
+                }
+                else
+                {
+                    destroyPlayerId = photonView.Owner.ActorNumber;
+                }
+
+                //inform everyone to destroy (eat) smallest player
+                //this means we have to make use of RPC
+                GameObject.Find("Scripts").GetComponent<NetworkManager>()
+                    .DestroyPlayer(destroyPlayerId);
+
+            }
+        }
+    }
 }
